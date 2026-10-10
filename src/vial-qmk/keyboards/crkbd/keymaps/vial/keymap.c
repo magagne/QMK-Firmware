@@ -14,6 +14,8 @@ enum custom_keycodes {
     HID_DragScroll = QK_KB_0,
     LED_DragScroll,
     LCLKx2,
+    ExitMouseLayer_mac,
+    ExitMouseLayer_win,
 };
 
 
@@ -47,6 +49,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 tap_code(KC_BTN1);
             }
 
+            return false;
+
+        case ExitMouseLayer_mac:
+            if (record->event.pressed) {
+                auto_mouse_layer_exit_mac();
+            }
+            return false;
+
+        case ExitMouseLayer_win:
+            if (record->event.pressed) {
+                auto_mouse_layer_exit_win();
+            }
             return false;
 
     }

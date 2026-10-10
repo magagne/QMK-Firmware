@@ -22,7 +22,17 @@ ROOT_FIRMWARE="$QMK_DIR/$FIRMWARE_NAME"
 BUILD_TARGET="crkbd/rev4_1"
 KEYMAP="vial"
 
-ARM_GCC="${ARM_GCC:-$(command -v arm-none-eabi-gcc || true)}"
+ARM_GCC="${ARM_GCC:-}"
+
+if [[ -z "$ARM_GCC" ]]; then
+    DEFAULT_ARM_GCC="/Applications/ArmGNUToolchain/15.3.rel2/arm-none-eabi/bin/arm-none-eabi-gcc"
+
+    if [[ -x "$DEFAULT_ARM_GCC" ]]; then
+        ARM_GCC="$DEFAULT_ARM_GCC"
+    else
+        ARM_GCC="$(command -v arm-none-eabi-gcc || true)"
+    fi
+fi
 
 if [[ -z "$ARM_GCC" || ! -x "$ARM_GCC" ]]; then
     echo "ERROR: arm-none-eabi-gcc was not found."
@@ -32,8 +42,9 @@ fi
 
 ARM_GCC_VERSION="$("$ARM_GCC" --version | head -n 1)"
 
-if [[ "$ARM_GCC_VERSION" != *"15.3.1"* ]]; then
-    echo "ERROR: The required Arm GNU Toolchain 15.3.Rel1 was not found."
+if [[ "$ARM_GCC_VERSION" != *"15.3.1"* &&
+      "$ARM_GCC_VERSION" != *"16.2.0"* ]]; then
+    echo "ERROR: Unsupported Arm GNU Toolchain version; expected GCC 15.3.1 or 16.2.0."
     echo "Detected:"
     echo "  $ARM_GCC_VERSION"
     echo "Compiler:"

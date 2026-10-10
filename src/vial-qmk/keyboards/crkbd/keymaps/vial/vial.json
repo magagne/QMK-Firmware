@@ -22,6 +22,16 @@
             "name": "LCLK_LCLK",
             "title": "Left Double Click",
             "shortName": "LCLK_2X"
+        },
+        {
+            "name": "EXIT_MOUSE_LAYER_MAC",
+            "title": "Exit Mouse Layer (Mac)",
+            "shortName": "EXIT_MAC"
+        },
+        {
+            "name": "EXIT_MOUSE_LAYER_WIN",
+            "title": "Exit Mouse Layer (Windows)",
+            "shortName": "EXIT_WIN"
         }],
     "layouts": {
         "labels": [
