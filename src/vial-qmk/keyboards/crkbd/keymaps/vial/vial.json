@@ -32,6 +32,71 @@
             "name": "EXIT_MOUSE_LAYER_WIN",
             "title": "Exit Mouse Layer (Windows)",
             "shortName": "EXIT_WIN"
+        },
+        {
+            "name": "HOLD_MOUSE_LAYER_MAC",
+            "title": "Hold Mouse Layer (Mac)",
+            "shortName": "HOLD_MAC"
+        },
+        {
+            "name": "HOLD_MOUSE_LAYER_WIN",
+            "title": "Hold Mouse Layer (Windows)",
+            "shortName": "HOLD_WIN"
+        },
+        {
+            "name": "LATCH_MOUSE_LAYER_MAC",
+            "title": "Latch Mouse Layer (Mac)",
+            "shortName": "LATCH_M"
+        },
+        {
+            "name": "LATCH_MOUSE_LAYER_WIN",
+            "title": "Latch Mouse Layer (Windows)",
+            "shortName": "LATCH_W"
+        },
+        {
+            "name": "UNLATCH_MOUSE_LAYER_MAC",
+            "title": "Unlatch Mouse Layer (Mac)",
+            "shortName": "UNLATCHM"
+        },
+        {
+            "name": "UNLATCH_MOUSE_LAYER_WIN",
+            "title": "Unlatch Mouse Layer (Windows)",
+            "shortName": "UNLATCHW"
+        },
+        {
+            "name": "KP_OR_HOLD_MOUSE_LAYER_MAC_N",
+            "title": "Tap N / Hold Mouse Layer (Mac)",
+            "shortName": "KP_HOLDM"
+        },
+        {
+            "name": "KP_OR_HOLD_MOUSE_LAYER_WIN_N",
+            "title": "Tap N / Hold Mouse Layer (Windows)",
+            "shortName": "KP_HOLDW"
+        },
+        {
+            "name": "KP_OR_LATCH_MOUSE_LAYER_MAC_N",
+            "title": "Tap N / Latch Mouse Layer (Mac)",
+            "shortName": "KP_LATCM"
+        },
+        {
+            "name": "KP_OR_LATCH_MOUSE_LAYER_WIN_N",
+            "title": "Tap N / Latch Mouse Layer (Windows)",
+            "shortName": "KP_LATCW"
+        },
+        {
+            "name": "HID_TEMPORARY_DPI",
+            "title": "Temporary DPI (Raw HID)",
+            "shortName": "HID_DPI"
+        },
+        {
+            "name": "LED_TEMPORARY_DPI",
+            "title": "Temporary DPI (Num Lock)",
+            "shortName": "LED_DPI"
+        },
+        {
+            "name": "APPLE_GLOBE",
+            "title": "Apple Globe",
+            "shortName": "GLOBE"
         }],
     "layouts": {
         "labels": [

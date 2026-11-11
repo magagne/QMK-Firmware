@@ -9,7 +9,7 @@ void td_accent_init(void) {
         .on_hold = LSFT(KC_LBRC), /* ¨ */
         .on_double_tap = 0,
         .on_tap_hold = 0,
-        .custom_tapping_term = 180,
+        .custom_tapping_term = 200,
     };
 
     dynamic_keymap_set_tap_dance(0, &entry);

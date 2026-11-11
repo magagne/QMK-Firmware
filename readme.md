@@ -6,14 +6,16 @@ Custom VIAL firmware for the Corne Rev4.1.
 
 This repository contains a VIAL-enabled QMK firmware build for the Corne Rev4.1.
 
-The project deliberately separates firmware functionality from the keyboard layout:
+The project separates firmware functionality from the compiled default layout:
 
 - QMK provides the firmware and custom functionality.
-- VIAL provides the complete user keyboard layout.
-- The `.vil` file is the authoritative layout configuration.
-- `keymap.c` contains firmware logic and only a minimal fallback layout.
+- `keymap.c` provides the compiled default keyboard layout.
+- VIAL can edit and persist the active keymap in EEPROM.
+- A `.vil` export can be used to save or transfer a VIAL layout.
 
-The complete user layout is therefore maintained in VIAL and is not duplicated in the QMK source.
+The compiled default translates the ZMK layer key assignments for layers 0-9.
+ZMK combos and macros are not ported. QMK-specific layers 10 and 11 are
+preserved.
 
 ## Firmware target
 
@@ -33,9 +35,14 @@ The complete user layout is therefore maintained in VIAL and is not duplicated i
         │   ├── drag_scroll/
         │   │   ├── drag_scroll.c
         │   │   └── drag_scroll.h
-        │   └── auto_mouse_layer/
-        │       ├── auto_mouse_layer.c
-        │       └── auto_mouse_layer.h
+        │   ├── auto_mouse_layer/
+        │   │   ├── auto_mouse_layer.c
+        │   │   └── auto_mouse_layer.h
+        │   └── mouse_layer/
+        │       ├── mouse_layer_controller.c
+        │       ├── mouse_layer.h
+        │       ├── temporary_dpi.c
+        │       └── temporary_dpi.h
         └── tap_dance/
             ├── tap_dance.c
             └── tap_dance.h
@@ -79,22 +86,20 @@ After building, flash:
 
 to the Corne Rev4.1 using the normal RP2040 UF2 bootloader procedure.
 
-After flashing, open VIAL and load the desired `.vil` configuration.
+After flashing, open VIAL. To use a saved layout, load its `.vil` export; to
+use the compiled defaults, reset the dynamic keymap. Existing VIAL EEPROM
+layouts remain active across firmware flashes.
 
 ## VIAL layout
 
-The complete keyboard layout is configured through VIAL.
+The compiled default layout in `keymap.c` translates the ZMK layer key
+assignments for layers 0-9. ZMK combos and macros are not ported. QMK layers
+10 and 11 remain custom. The QMK `ex2` layout has four more physical positions
+than the ZMK layout; those additional positions are left unassigned.
 
-The `.vil` configuration is the source of truth for:
-
-- Layer assignments
-- Key assignments
-- Tap Dance assignments
-- VIAL configuration
-
-The full user layout should not be recreated in `keymap.c`.
-
-This separation prevents the firmware source and VIAL configuration from becoming two competing sources of truth.
+VIAL can override and persist the compiled keymap in EEPROM. Reflashing the
+firmware does not replace an already-saved Vial keymap; load a `.vil` export
+or reset the dynamic keymap to use the compiled defaults.
 
 ## Custom firmware functionality
 
@@ -108,6 +113,7 @@ The firmware provides:
 - RGB controls
 - Encoder support
 - Custom firmware keycodes
+- Apple Globe consumer key
 
 The custom firmware modules are located at:
 
@@ -134,10 +140,10 @@ For the current layout:
 
     Base layer 0
     Mouse layer 3
-    Timeout: configurable
+    Timeout: 400 ms
     Practical tuning range: approximately 300–700 ms
 
-The Auto Mouse Layer timeout is configurable. A practical tuning range is approximately **300–700 ms**, depending on the desired balance between responsiveness and accidental layer activation.
+The QMK Auto Mouse Layer timeout is **400 ms**, matching the ZMK configuration. It can be overridden with `PLOOPY_AUTO_MOUSE_LAYER_TIMEOUT`; a practical tuning range is approximately **300–700 ms**.
 
 ### Windows
 
@@ -166,7 +172,7 @@ The Windows path is state-based and does not use the QMK Auto Mouse timeout.
 
 The two Auto Mouse paths intentionally use different signaling mechanisms:
 
-    macOS   → Raw HID activity → layer 3 → 300–700 ms practical tuning range
+    macOS   → Raw HID activity → layer 3 → 400 ms timeout
     Windows → Caps Lock state  → layer 7 → LED state controls layer
 
 The Windows path is only active while the Windows base layer (layer 4) is selected.
@@ -221,7 +227,7 @@ The hold action is implemented as:
 
 Double-tap and tap-hold actions are not configured.
 
-The entry uses the default QMK tapping term.
+The entry uses a 200 ms tapping term, matching the ZMK hold-tap behavior.
 
 The Tap Dance entry is initialized during keyboard startup by:
 
@@ -241,32 +247,45 @@ The firmware currently defines:
 
     HID_DragScroll
     LED_DragScroll
+    HOLD_MOUSE_LAYER_MAC / HOLD_MOUSE_LAYER_WIN
+    LATCH_MOUSE_LAYER_MAC / LATCH_MOUSE_LAYER_WIN
+    UNLATCH_MOUSE_LAYER_MAC / UNLATCH_MOUSE_LAYER_WIN
+    KP_OR_HOLD_MOUSE_LAYER_MAC_N / KP_OR_HOLD_MOUSE_LAYER_WIN_N
+    KP_OR_LATCH_MOUSE_LAYER_MAC_N / KP_OR_LATCH_MOUSE_LAYER_WIN_N
+    HID_TEMPORARY_DPI / LED_TEMPORARY_DPI
+    APPLE_GLOBE
 
 These keycodes implement firmware functionality.
 
-Their assignment to physical keys is performed through VIAL.
+The compiled default assigns custom keycodes in `keymap.c`. VIAL can change
+those assignments and persist them in EEPROM.
+
+The mouse-layer controller arbitrates automatic and manual activation for
+layers 3 (Mac) and 7 (Windows). Manual hold/latch requests signal temporary
+DPI only for the selected host; automatic activation does not. The `KP_OR_*_N`
+keys tap `N` when released before the 300 ms tapping term, or hold/latch the
+host's Mouse layer when held through the term. The standalone temporary-DPI
+keys use Raw HID on Mac and a Num Lock pulse on Windows.
+
+The `PLOOPY_KP_OR_HOLD_MAC(kc)`, `PLOOPY_KP_OR_HOLD_WIN(kc)`,
+`PLOOPY_KP_OR_LATCH_MAC(kc)`, and `PLOOPY_KP_OR_LATCH_WIN(kc)` macros provide
+the same tap-hold behaviors with a caller-selected QMK tap keycode up to
+`PLOOPY_KP_OR_TAP_KEY_MAX`. VIAL exposes `N` variants directly.
 
 ## Tap Dance
 
-Tap Dance assignments are configured through VIAL.
-
-They are not maintained as a duplicate full keyboard layout in `keymap.c`.
-
-To restore the configured Tap Dance assignments, load the appropriate `.vil` configuration in VIAL.
+The compiled default assigns `TD(0)` on symbol layers 2 and 6. VIAL can
+override those assignments in its EEPROM keymap. Reset the dynamic keymap to
+restore the compiled defaults, or load a saved `.vil` export.
 
 ## Source of truth
 
-Firmware functionality belongs in:
+The compiled default keymap and firmware functionality live in:
 
-    src/vial-qmk/
+    src/vial-qmk/keyboards/crkbd/keymaps/vial/
 
-The user keyboard layout belongs in:
-
-    .vil
-
-The minimal fallback layout in `keymap.c` exists only because QMK requires a keymap definition for compilation and introspection.
-
-It is not intended to represent the user's actual keyboard configuration.
+Vial changes are stored in EEPROM on the keyboard. A `.vil` export can be
+stored separately to back up or transfer those changes.
 
 ## Development workflow
 
@@ -278,7 +297,8 @@ Then:
 
 1. Flash the generated `.uf2`.
 2. Open VIAL.
-3. Load the desired `.vil` configuration.
+3. If restoring a saved VIAL layout, load its `.vil` export; otherwise reset
+   the dynamic keymap to use the compiled defaults.
 4. Verify the layout.
 5. Test the firmware functionality.
 
