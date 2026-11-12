@@ -1,5 +1,6 @@
 {
 	"dotnet.preferCSharpExtension": true,
 	"dotnet.defaultSolution": "src/vial-qmk/vial-nckiser.sln",
+	"C_Cpp.default.compileCommands": "${workspaceFolder}/src/vial-qmk/compile_commands.json",
 	"C_Cpp.dimInactiveRegions": false
 }
