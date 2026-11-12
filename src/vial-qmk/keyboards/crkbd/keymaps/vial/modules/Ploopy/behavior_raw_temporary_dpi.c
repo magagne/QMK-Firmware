@@ -1,4 +1,4 @@
-#include "temporary_dpi.h"
+#include "behavior_mouse_layer.h"
 
 #include <stdint.h>
 
@@ -11,6 +11,20 @@ static bool mac_output_active;
 static bool windows_manual_requested;
 static bool windows_standalone_requested;
 static bool windows_output_active;
+
+bool behavior_raw_temporary_dpi_process_record(uint16_t keycode,
+                                               keyrecord_t *record) {
+    switch (keycode) {
+        case HID_TempDPI:
+            behavior_temporary_dpi_set(false, record->event.pressed);
+            return true;
+        case LED_TempDPI:
+            behavior_temporary_dpi_set(true, record->event.pressed);
+            return true;
+        default:
+            return false;
+    }
+}
 
 static void send_mac_state(bool active) {
     uint8_t data[32] = {0};

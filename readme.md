@@ -31,18 +31,17 @@ preserved.
     ├── keymap.c
     ├── rules.mk
     └── modules/
-        ├── ploopy/
-        │   ├── drag_scroll/
-        │   │   ├── drag_scroll.c
-        │   │   └── drag_scroll.h
-        │   ├── auto_mouse_layer/
-        │   │   ├── auto_mouse_layer.c
-        │   │   └── auto_mouse_layer.h
-        │   └── mouse_layer/
-        │       ├── mouse_layer_controller.c
-        │       ├── mouse_layer.h
-        │       ├── temporary_dpi.c
-        │       └── temporary_dpi.h
+        ├── Ploopy/
+        │   ├── behavior_mouse_layer.h
+        │   ├── behavior_mouse_layer_auto.c
+        │   ├── behavior_mouse_layer_controller.c
+        │   ├── behavior_mouse_layer_hold.c
+        │   ├── behavior_mouse_layer_kp_or_hold.c
+        │   ├── behavior_mouse_layer_kp_or_latch.c
+        │   ├── behavior_mouse_layer_latch.c
+        │   ├── behavior_mouse_layer_unlatch.c
+        │   ├── behavior_raw_drag_scroll.c
+        │   └── behavior_raw_temporary_dpi.c
         └── tap_dance/
             ├── tap_dance.c
             └── tap_dance.h
@@ -183,7 +182,7 @@ Changing away from the relevant base layer disables the corresponding Auto Mouse
 
 DragScroll is implemented as a separate module:
 
-    src/vial-qmk/keyboards/crkbd/keymaps/vial/modules/ploopy/drag_scroll/
+    src/vial-qmk/keyboards/crkbd/keymaps/vial/modules/Ploopy/
 
 The module provides:
 

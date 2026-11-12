@@ -41,9 +41,26 @@ enum custom_keycodes {
 
 bool mouse_layer_process_record(uint16_t keycode, keyrecord_t *record);
 void mouse_layer_controller_task(void);
-void mouse_layer_kp_or_task(void);
+bool behavior_mouse_layer_kp_or_hold_process(uint16_t keycode,
+                                             keyrecord_t *record);
+void behavior_mouse_layer_kp_or_hold_task(void);
+bool behavior_mouse_layer_kp_or_latch_process(uint16_t keycode,
+                                              keyrecord_t *record);
+void behavior_mouse_layer_kp_or_latch_task(void);
+bool behavior_mouse_layer_hold_process(uint16_t keycode, keyrecord_t *record);
+bool behavior_mouse_layer_latch_process(uint16_t keycode, keyrecord_t *record);
+bool behavior_mouse_layer_unlatch_process(uint16_t keycode,
+                                          keyrecord_t *record);
+void auto_mouse_layer_task(void);
 bool behavior_mouse_layer_auto_set(bool active);
 void behavior_mouse_layer_auto_cancel_timeout(void);
+bool behavior_raw_drag_scroll_process_record(uint16_t keycode,
+                                             keyrecord_t *record);
+void drag_scroll_init(void);
+void drag_scroll_task(void);
+void drag_scroll_set(bool enabled);
+bool behavior_raw_temporary_dpi_process_record(uint16_t keycode,
+                                               keyrecord_t *record);
 void behavior_hold_mouse_layer_update(uint8_t layer, bool pressed);
 void behavior_latch_mouse_layer_set(uint8_t layer);
 void behavior_unlatch_mouse_layer(uint8_t mouse_layer, uint8_t base_layer);

@@ -1,10 +1,9 @@
-#include "auto_mouse_layer.h"
+#include "behavior_mouse_layer.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "raw_hid.h"
-#include "../mouse_layer/mouse_layer.h"
 
 #define PLOOPY_HID_AUTO_MOUSE_LAYER 0x41
 #define PLOOPY_HID_AUTO_MOUSE_LAYER_VERSION 0x01
@@ -37,6 +36,5 @@ void auto_mouse_layer_task(void) {
         (void)behavior_mouse_layer_auto_set(false);
     }
 
-    mouse_layer_kp_or_task();
     mouse_layer_controller_task();
 }

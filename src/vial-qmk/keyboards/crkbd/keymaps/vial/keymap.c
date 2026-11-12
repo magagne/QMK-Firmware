@@ -1,8 +1,6 @@
 #include QMK_KEYBOARD_H
 
-#include "modules/ploopy/drag_scroll/drag_scroll.h"
-#include "modules/ploopy/auto_mouse_layer/auto_mouse_layer.h"
-#include "modules/ploopy/mouse_layer/mouse_layer.h"
+#include "modules/Ploopy/behavior_mouse_layer.h"
 #include "modules/tap_dance/tap_dance.h"
 
 
@@ -15,22 +13,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
+    if (behavior_raw_drag_scroll_process_record(keycode, record) ||
+        behavior_raw_temporary_dpi_process_record(keycode, record)) {
+        return false;
+    }
+
     switch (keycode)
     {
-
-        case HID_DragScroll:
-
-            drag_scroll_set(record->event.pressed);
-            return false;
-
-
-        case LED_DragScroll:
-
-            tap_code(KC_SCRL);
-
-            return false;
-
-
         case LCLKx2:
 
             if (record->event.pressed) {

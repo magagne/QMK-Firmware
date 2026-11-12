@@ -14,9 +14,14 @@ TAP_DANCE_ENABLE    = yes
 QMK_SETTINGS        = no
 ENCODER_MAP_ENABLE = yes
 
-SRC += modules/ploopy/drag_scroll/drag_scroll.c
-SRC += modules/ploopy/auto_mouse_layer/auto_mouse_layer.c
-SRC += modules/ploopy/mouse_layer/mouse_layer_controller.c
-SRC += modules/ploopy/mouse_layer/temporary_dpi.c
+SRC += modules/Ploopy/behavior_raw_drag_scroll.c
+SRC += modules/Ploopy/behavior_mouse_layer_auto.c
+SRC += modules/Ploopy/behavior_mouse_layer_controller.c
+SRC += modules/Ploopy/behavior_mouse_layer_hold.c
+SRC += modules/Ploopy/behavior_mouse_layer_latch.c
+SRC += modules/Ploopy/behavior_mouse_layer_kp_or_hold.c
+SRC += modules/Ploopy/behavior_mouse_layer_kp_or_latch.c
+SRC += modules/Ploopy/behavior_mouse_layer_unlatch.c
+SRC += modules/Ploopy/behavior_raw_temporary_dpi.c
 
 SRC += modules/tap_dance/tap_dance.c
