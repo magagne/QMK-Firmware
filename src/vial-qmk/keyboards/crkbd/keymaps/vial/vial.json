@@ -145,22 +145,22 @@
         },
         {
             "name": "MACRO_M10",
-            "title": "Macro_M10 placeholder text",
+            "title": "M10 Vial Macro 10",
             "shortName": "M10"
         },
         {
             "name": "MACRO_M11",
-            "title": "Macro_M11 placeholder text",
+            "title": "M11 Vial Macro 11",
             "shortName": "M11"
         },
         {
             "name": "MACRO_M12",
-            "title": "Macro_M12 placeholder text",
+            "title": "M12 Vial Macro 12",
             "shortName": "M12"
         },
         {
             "name": "MACRO_M13",
-            "title": "Macro_M13 placeholder text",
+            "title": "M13 Vial Macro 13",
             "shortName": "M13"
         }],
     "layouts": {

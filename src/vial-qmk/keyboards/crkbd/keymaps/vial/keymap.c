@@ -6,10 +6,10 @@
 #include "modules/tap_dance/tap_dance.h"
 #include "print.h"
 #include "process_combo.h"
-#include "send_string.h"
 #include "vial.h"
 
 #define ZMK_COMBO_DEFAULTS_MAGIC 0x5A4D4B43UL
+#define VIAL_COMBO_AND_MACRO_DEFAULTS_MAGIC 0x5A4D4B44UL
 #define MAC_SCREENSHOT_KEY LGUI(LSFT(KC_4))
 #define WINDOWS_SCREENSHOT_KEY KC_PRINT_SCREEN
 
@@ -39,6 +39,50 @@ static uint8_t current_keymap_layer(void) {
     return get_highest_layer(layer_state | default_layer_state);
 }
 
+static bool vial_macro_buffer_is_empty(void) {
+    uint16_t buffer_size = dynamic_keymap_macro_get_buffer_size();
+    uint8_t buffer[16];
+
+    for (uint16_t offset = 0; offset < buffer_size;) {
+        uint16_t chunk_size = buffer_size - offset;
+        if (chunk_size > sizeof(buffer)) {
+            chunk_size = sizeof(buffer);
+        }
+
+        dynamic_keymap_macro_get_buffer(offset, chunk_size, buffer);
+        for (uint16_t i = 0; i < chunk_size; i++) {
+            if (buffer[i] != 0) {
+                return false;
+            }
+        }
+
+        offset += chunk_size;
+    }
+
+    return true;
+}
+
+static bool install_vial_macro_defaults(void) {
+    static uint8_t default_macros[] =
+        "\0\0\0\0\0\0\0\0\0\0Macro_10\0Macro_11\0Macro_12\0Macro_13";
+    uint16_t default_size = sizeof(default_macros);
+
+    if (dynamic_keymap_macro_get_count() < 14) {
+        uprintf("Vial macro defaults require at least 14 macro slots\n");
+        return false;
+    }
+    if (dynamic_keymap_macro_get_buffer_size() < default_size) {
+        uprintf("Insufficient EEPROM space for Vial macro defaults\n");
+        return false;
+    }
+    if (!vial_macro_buffer_is_empty()) {
+        return true;
+    }
+
+    dynamic_keymap_macro_set_buffer(0, default_size, default_macros);
+    return true;
+}
+
 bool combo_should_trigger(uint16_t combo_index, combo_t *combo,
                           uint16_t keycode, keyrecord_t *record) {
     uint8_t layer = current_keymap_layer();
@@ -66,29 +110,37 @@ bool combo_should_trigger(uint16_t combo_index, combo_t *combo,
 }
 
 static void install_zmk_combo_defaults(void) {
-    if (eeconfig_read_user() == ZMK_COMBO_DEFAULTS_MAGIC) {
+    uint32_t user_magic = eeconfig_read_user();
+
+    if (user_magic == VIAL_COMBO_AND_MACRO_DEFAULTS_MAGIC) {
         return;
     }
 
-    for (uint8_t combo_index = 0; combo_index < VIAL_COMBO_ENTRIES;
-         combo_index++) {
-        if (dynamic_keymap_set_combo(combo_index,
-                                     &zmk_combo_defaults[combo_index]) != 0) {
-            uprintf("Failed to initialize ZMK combo %u\n", combo_index);
-            return;
-        }
+    if (user_magic != ZMK_COMBO_DEFAULTS_MAGIC) {
+        for (uint8_t combo_index = 0; combo_index < VIAL_COMBO_ENTRIES;
+             combo_index++) {
+            if (dynamic_keymap_set_combo(combo_index,
+                                         &zmk_combo_defaults[combo_index]) != 0) {
+                uprintf("Failed to initialize ZMK combo %u\n", combo_index);
+                return;
+            }
 
-        for (uint8_t input_index = 0; input_index < 4; input_index++) {
-            key_combos_keys[combo_index][input_index] =
-                zmk_combo_defaults[combo_index].input[input_index];
+            for (uint8_t input_index = 0; input_index < 4; input_index++) {
+                key_combos_keys[combo_index][input_index] =
+                    zmk_combo_defaults[combo_index].input[input_index];
+            }
+            key_combos_keys[combo_index][4] = COMBO_END;
+            key_combos[combo_index].keys = key_combos_keys[combo_index];
+            key_combos[combo_index].keycode =
+                zmk_combo_defaults[combo_index].output;
         }
-        key_combos_keys[combo_index][4] = COMBO_END;
-        key_combos[combo_index].keys = key_combos_keys[combo_index];
-        key_combos[combo_index].keycode =
-            zmk_combo_defaults[combo_index].output;
     }
 
-    eeconfig_update_user(ZMK_COMBO_DEFAULTS_MAGIC);
+    if (!install_vial_macro_defaults()) {
+        return;
+    }
+
+    eeconfig_update_user(VIAL_COMBO_AND_MACRO_DEFAULTS_MAGIC);
 }
 
 static void run_defined_macro(uint16_t keycode) {
@@ -130,16 +182,16 @@ static void run_defined_macro(uint16_t keycode) {
             tap_code16(LCTL(KC_U));
             break;
         case Macro_M10:
-            SEND_STRING("Macro_M10");
+            dynamic_keymap_macro_send(10);
             break;
         case Macro_M11:
-            SEND_STRING("Macro_M11");
+            dynamic_keymap_macro_send(11);
             break;
         case Macro_M12:
-            SEND_STRING("Macro_M12");
+            dynamic_keymap_macro_send(12);
             break;
         case Macro_M13:
-            SEND_STRING("Macro_M13");
+            dynamic_keymap_macro_send(13);
             break;
     }
 }

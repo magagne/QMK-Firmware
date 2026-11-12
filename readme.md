@@ -126,10 +126,13 @@ Layer-sensitive combos only trigger on the corresponding Mac or Windows
 layers.
 
 The IDE and bookmark macros from ZMK are available as Vial custom keycodes.
-The four password macros type their identifiers (`Macro_M10` through
-`Macro_M13`) as placeholder text instead of typing credential values. The
-ZMK Bluetooth-selection macros map to QMK default-layer changes; this wired
-QMK target cannot select Bluetooth profiles.
+The M10-M13 combo triggers execute Vial's editable dynamic macro slots 10-13.
+On first initialization with an empty macro buffer, slots 10-13 are seeded with
+`Macro_10` through `Macro_13`. Replace those placeholders in Vial's macro
+editor. Existing non-empty macro buffers are preserved. Macro contents are
+stored unencrypted in keyboard EEPROM, so avoid storing credentials or other
+sensitive data. The ZMK Bluetooth-selection macros map to QMK default-layer
+changes; this wired QMK target cannot select Bluetooth profiles.
 
 ## HID Auto Mouse Layer
 
