@@ -37,7 +37,26 @@ enum custom_keycodes {
     HID_TempDPI,
     LED_TempDPI,
     AppleGlobe,
+    Macro_M00_Outline_CollapseAll,
+    Macro_M01_Outline_ToggleCurrent,
+    Macro_M02_Outline_ExpandAll,
+    Macro_M03_Bookmark_Previous,
+    Macro_M04_Bookmark_Toggle,
+    Macro_M05_Bookmark_ClearAll,
+    Macro_M06_Bookmark_Next,
+    Macro_M07_Comment,
+    Macro_M08_UnComment,
+    Macro_M10,
+    Macro_M11,
+    Macro_M12,
+    Macro_M13,
 };
+
+/* QMK's wired target can select base layers but cannot select ZMK Bluetooth slots. */
+#define Macro_SetMac DF(PLOOPY_MAC_BASE_LAYER)
+#define Macro_SetWin DF(PLOOPY_WINDOWS_BASE_LAYER)
+#define Macro_SetiPad DF(PLOOPY_MAC_BASE_LAYER)
+#define Macro_SetiPhone DF(PLOOPY_MAC_BASE_LAYER)
 
 bool mouse_layer_process_record(uint16_t keycode, keyrecord_t *record);
 void mouse_layer_controller_task(void);

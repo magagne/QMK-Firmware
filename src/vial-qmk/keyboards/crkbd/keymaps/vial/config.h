@@ -51,3 +51,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VIAL_COMBO_ENTRIES 8
 
+#define COMBO_SHOULD_TRIGGER
+

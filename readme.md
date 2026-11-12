@@ -13,9 +13,8 @@ The project separates firmware functionality from the compiled default layout:
 - VIAL can edit and persist the active keymap in EEPROM.
 - A `.vil` export can be used to save or transfer a VIAL layout.
 
-The compiled default translates the ZMK layer key assignments for layers 0-9.
-ZMK combos and macros are not ported. QMK-specific layers 10 and 11 are
-preserved.
+The compiled default translates the ZMK layer key assignments for layers 0-9,
+including its combos and macros. QMK-specific layers 10 and 11 are preserved.
 
 ## Firmware target
 
@@ -113,10 +112,24 @@ The firmware provides:
 - Encoder support
 - Custom firmware keycodes
 - Apple Globe consumer key
+- ZMK-derived combos and editor macros
 
 The custom firmware modules are located at:
 
     src/vial-qmk/keyboards/crkbd/keymaps/vial/modules/
+
+## Combos and macros
+
+The eight ZMK combos are installed into Vial's eight combo slots on the first
+boot after this firmware update. They remain editable in Vial afterward.
+Layer-sensitive combos only trigger on the corresponding Mac or Windows
+layers.
+
+The IDE and bookmark macros from ZMK are available as Vial custom keycodes.
+The four password macros type their identifiers (`Macro_M10` through
+`Macro_M13`) as placeholder text instead of typing credential values. The
+ZMK Bluetooth-selection macros map to QMK default-layer changes; this wired
+QMK target cannot select Bluetooth profiles.
 
 ## HID Auto Mouse Layer
 

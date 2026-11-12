@@ -1,8 +1,189 @@
 #include QMK_KEYBOARD_H
 
+#include "dynamic_keymap.h"
+#include "eeconfig.h"
 #include "modules/Ploopy/behavior_mouse_layer.h"
 #include "modules/tap_dance/tap_dance.h"
+#include "print.h"
+#include "process_combo.h"
+#include "send_string.h"
+#include "vial.h"
 
+#define ZMK_COMBO_DEFAULTS_MAGIC 0x5A4D4B43UL
+#define MAC_SCREENSHOT_KEY LGUI(LSFT(KC_4))
+#define WINDOWS_SCREENSHOT_KEY KC_PRINT_SCREEN
+
+enum combo_internal_keycodes {
+    HOST_LINE_END_KEY = QK_USER + 0x180,
+    HOST_SCREENSHOT_KEY,
+    COMBO_BRIGHTNESS_UP,
+    COMBO_BRIGHTNESS_DOWN,
+};
+
+static const vial_combo_entry_t zmk_combo_defaults[VIAL_COMBO_ENTRIES] = {
+    {.input = {LSFT(KC_1), RALT(KC_LBRC)}, .output = Macro_M10},
+    {.input = {RALT(KC_8), LSFT(KC_2)}, .output = Macro_M11},
+    {.input = {KC_INSERT, HOST_LINE_END_KEY}, .output = Macro_M12},
+    /* This shared key represents Cmd+Shift+4 on Mac and Print Screen on Windows. */
+    {.input = {HOST_SCREENSHOT_KEY, KC_CAPS_LOCK}, .output = Macro_M13},
+    {.input = {KC_J, KC_M}, .output = COMBO_BRIGHTNESS_UP},
+    {.input = {KC_K, KC_M}, .output = COMBO_BRIGHTNESS_DOWN},
+    {.input = {KC_B, KC_G}, .output = KC_AUDIO_VOL_UP},
+    {.input = {KC_V, KC_G}, .output = KC_AUDIO_VOL_DOWN},
+};
+
+extern combo_t key_combos[VIAL_COMBO_ENTRIES];
+extern uint16_t key_combos_keys[VIAL_COMBO_ENTRIES][5];
+
+static uint8_t current_keymap_layer(void) {
+    return get_highest_layer(layer_state | default_layer_state);
+}
+
+bool combo_should_trigger(uint16_t combo_index, combo_t *combo,
+                          uint16_t keycode, keyrecord_t *record) {
+    uint8_t layer = current_keymap_layer();
+
+    (void)combo;
+    (void)keycode;
+    (void)record;
+
+    switch (combo_index) {
+        case 0:
+        case 1:
+            return layer == 2 || layer == 6;
+        case 2:
+            return layer == 1 || layer == 5;
+        case 3:
+            return layer == 1 || layer == 5;
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            return layer == 0 || layer == 4;
+        default:
+            return true;
+    }
+}
+
+static void install_zmk_combo_defaults(void) {
+    if (eeconfig_read_user() == ZMK_COMBO_DEFAULTS_MAGIC) {
+        return;
+    }
+
+    for (uint8_t combo_index = 0; combo_index < VIAL_COMBO_ENTRIES;
+         combo_index++) {
+        if (dynamic_keymap_set_combo(combo_index,
+                                     &zmk_combo_defaults[combo_index]) != 0) {
+            uprintf("Failed to initialize ZMK combo %u\n", combo_index);
+            return;
+        }
+
+        for (uint8_t input_index = 0; input_index < 4; input_index++) {
+            key_combos_keys[combo_index][input_index] =
+                zmk_combo_defaults[combo_index].input[input_index];
+        }
+        key_combos_keys[combo_index][4] = COMBO_END;
+        key_combos[combo_index].keys = key_combos_keys[combo_index];
+        key_combos[combo_index].keycode =
+            zmk_combo_defaults[combo_index].output;
+    }
+
+    eeconfig_update_user(ZMK_COMBO_DEFAULTS_MAGIC);
+}
+
+static void run_defined_macro(uint16_t keycode) {
+    switch (keycode) {
+        case Macro_M00_Outline_CollapseAll:
+            tap_code16(LCTL(KC_M));
+            tap_code16(LCTL(KC_A));
+            break;
+        case Macro_M01_Outline_ToggleCurrent:
+            tap_code16(LCTL(KC_M));
+            tap_code16(LCTL(KC_M));
+            break;
+        case Macro_M02_Outline_ExpandAll:
+            tap_code16(LCTL(KC_M));
+            tap_code16(LCTL(KC_L));
+            break;
+        case Macro_M03_Bookmark_Previous:
+            tap_code16(LCTL(KC_K));
+            tap_code16(LCTL(KC_P));
+            break;
+        case Macro_M04_Bookmark_Toggle:
+            tap_code16(LCTL(KC_K));
+            tap_code16(LCTL(KC_K));
+            break;
+        case Macro_M05_Bookmark_ClearAll:
+            tap_code16(LCTL(KC_K));
+            tap_code16(LCTL(KC_L));
+            break;
+        case Macro_M06_Bookmark_Next:
+            tap_code16(LCTL(KC_K));
+            tap_code16(LCTL(KC_N));
+            break;
+        case Macro_M07_Comment:
+            tap_code16(LCTL(KC_K));
+            tap_code16(LCTL(KC_C));
+            break;
+        case Macro_M08_UnComment:
+            tap_code16(LCTL(KC_K));
+            tap_code16(LCTL(KC_U));
+            break;
+        case Macro_M10:
+            SEND_STRING("Macro_M10");
+            break;
+        case Macro_M11:
+            SEND_STRING("Macro_M11");
+            break;
+        case Macro_M12:
+            SEND_STRING("Macro_M12");
+            break;
+        case Macro_M13:
+            SEND_STRING("Macro_M13");
+            break;
+    }
+}
+
+static void run_mac_brightness_hotkey(uint8_t function_key) {
+    register_mods(MOD_LCTL | MOD_LSFT | MOD_LALT | MOD_LGUI);
+    tap_code(function_key);
+    unregister_mods(MOD_LCTL | MOD_LSFT | MOD_LALT | MOD_LGUI);
+}
+
+static void run_brightness_up_combo(void) {
+    if (get_highest_layer(default_layer_state) == PLOOPY_MAC_BASE_LAYER) {
+        run_mac_brightness_hotkey(KC_F10);
+    } else {
+        tap_code16(KC_BRIGHTNESS_UP);
+    }
+}
+
+static void run_brightness_down_combo(void) {
+    if (get_highest_layer(default_layer_state) == PLOOPY_MAC_BASE_LAYER) {
+        run_mac_brightness_hotkey(KC_F11);
+    } else {
+        tap_code16(KC_BRIGHTNESS_DOWN);
+    }
+}
+
+static void run_host_line_end_key(void) {
+    uint8_t base_layer = get_highest_layer(default_layer_state);
+
+    tap_code16(base_layer == PLOOPY_MAC_BASE_LAYER ? LGUI(KC_RIGHT) : KC_END);
+}
+
+static void run_host_screenshot_key(void) {
+    uint8_t base_layer = get_highest_layer(default_layer_state);
+
+    tap_code16(base_layer == PLOOPY_MAC_BASE_LAYER ? MAC_SCREENSHOT_KEY
+                                                   : WINDOWS_SCREENSHOT_KEY);
+}
+
+static void run_double_click(void) {
+    tap_code(KC_BTN1);
+    wait_ms(50);
+    tap_code(KC_BTN1);
+}
 
 /* ---------------------------------------------------------------------------
  * Custom keycode processing
@@ -18,21 +199,42 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
-    switch (keycode)
-    {
-        case LCLKx2:
-
-            if (record->event.pressed) {
-                tap_code(KC_BTN1);
-                wait_ms(50);
-                tap_code(KC_BTN1);
-            }
-
-            return false;
-
+    if (keycode >= Macro_M00_Outline_CollapseAll && keycode <= Macro_M13) {
+        if (record->event.pressed) {
+            run_defined_macro(keycode);
+        }
+        return false;
     }
 
-    return true;
+    switch (keycode) {
+        case HOST_LINE_END_KEY:
+            if (record->event.pressed) {
+                run_host_line_end_key();
+            }
+            return false;
+        case HOST_SCREENSHOT_KEY:
+            if (record->event.pressed) {
+                run_host_screenshot_key();
+            }
+            return false;
+        case COMBO_BRIGHTNESS_UP:
+            if (record->event.pressed) {
+                run_brightness_up_combo();
+            }
+            return false;
+        case COMBO_BRIGHTNESS_DOWN:
+            if (record->event.pressed) {
+                run_brightness_down_combo();
+            }
+            return false;
+        case LCLKx2:
+            if (record->event.pressed) {
+                run_double_click();
+            }
+            return false;
+        default:
+            return true;
+    }
 }
 
 
@@ -44,6 +246,9 @@ void keyboard_post_init_user(void) {
 
     drag_scroll_init();
     td_accent_init();
+    if (is_keyboard_master()) {
+        install_zmk_combo_defaults();
+    }
 
 }
 
@@ -56,18 +261,11 @@ void housekeeping_task_user(void) {
 }
 
 
-/* ===========================================================================
- * KEYMAP
- *
- * Layer key assignments in layers 0-9 follow the shared ZMK Corne keymap;
- * ZMK combos and macros are not ported. QMK-specific layers 10 and 11 are
- * retained. The ex2 layout has four extra top/home positions; they are KC_NO.
- * Rows are spaced by physical x-column; visual gaps are not macro arguments.
- *
- * Vial can override this compiled default layout using its EEPROM keymap.
- * =========================================================================== */
-
-
+/*
+===========================================================================
+Vial can override this compiled default layout using its EEPROM keymap.
+ ===========================================================================
+*/
 #ifdef LAYOUT_split_3x6_3_ex2
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
@@ -86,13 +284,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
   ),
   [1] = LAYOUT_split_3x6_3_ex2
   (
-      //+-------+---------------+---------------+---------------+---------------+---------------+-------+     +----------+---------------+---------------+---------+----------------+---------------+-------+
-         KC_NO,  LGUI(KC_Z),     LGUI(KC_X),     LGUI(KC_C),     LGUI(KC_V),     S(LGUI(KC_Z)),  KC_NO,        KC_NO,     LGUI(KC_LEFT),  KC_PGDN,        KC_PGUP,  LGUI(KC_RIGHT),  LGUI(S(KC_4)),  KC_NO,
-      //+-------+---------------+---------------+---------------+---------------+---------------+-------+     +----------+---------------+---------------+---------+----------------+---------------+-------+
-         KC_NO,  OSM(MOD_LALT),  OSM(MOD_LGUI),  OSM(MOD_LSFT),  OSM(MOD_LCTL),  KC_BSPC,        KC_NO,        KC_NO,     KC_LEFT,        KC_DOWN,        KC_UP,    KC_RIGHT,        KC_ESCAPE,      KC_NO,
-      //+-------+---------------+---------------+---------------+---------------+---------------+-------+     +----------+---------------+---------------+---------+----------------+---------------+-------+
-         KC_NO,  KC_ENTER,       LSFT(KC_TAB),   KC_TAB,         OSM(MOD_RCTL),  KC_NO,                                   KC_DELETE,      KC_BSPC,        KC_TAB,   KC_INSERT,       KC_CAPS_LOCK,   KC_NO,
-      //+-------+---------------+---------------+---------------+---------------+---------------+-------+     +----------+---------------+---------------+---------+----------------+---------------+-------+
+      //+-------+---------------+---------------+---------------+---------------+---------------+-------+     +----------+---------------+---------------+---------+-------------------+---------------------+-------+
+         KC_NO,  LGUI(KC_Z),     LGUI(KC_X),     LGUI(KC_C),     LGUI(KC_V),     S(LGUI(KC_Z)),  KC_NO,        KC_NO,     LGUI(KC_LEFT),  KC_PGDN,        KC_PGUP,  HOST_LINE_END_KEY,  HOST_SCREENSHOT_KEY,  KC_NO,
+      //+-------+---------------+---------------+---------------+---------------+---------------+-------+     +----------+---------------+---------------+---------+-------------------+---------------------+-------+
+         KC_NO,  OSM(MOD_LALT),  OSM(MOD_LGUI),  OSM(MOD_LSFT),  OSM(MOD_LCTL),  KC_BSPC,        KC_NO,        KC_NO,     KC_LEFT,        KC_DOWN,        KC_UP,    KC_RIGHT,           KC_ESCAPE,            KC_NO,
+      //+-------+---------------+---------------+---------------+---------------+---------------+-------+     +----------+---------------+---------------+---------+-------------------+---------------------+-------+
+         KC_NO,  KC_ENTER,       LSFT(KC_TAB),   KC_TAB,         OSM(MOD_RCTL),  KC_NO,                                   KC_DELETE,      KC_BSPC,        KC_TAB,   KC_INSERT,          KC_CAPS_LOCK,         KC_NO,
+      //+-------+---------------+---------------+---------------+---------------+---------------+-------+     +----------+---------------+---------------+---------+-------------------+---------------------+-------+
                                                                  MO(11),         KC_NO,          KC_NO,        KC_ENTER,  LCTL(KC_LEFT),  LCTL(KC_RIGHT)
       //                                                        +---------------+---------------+-------+     +----------+---------------+---------------+
   ),
@@ -115,7 +313,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
       //+-------+------------+--------------+------------+------------+---------------+----------------+     +-------+---------------+--------------------+---------------------+-----------------------+-------+-------+
          KC_NO,  KC_LALT,     KC_LGUI,       KC_LSFT,     KC_LCTL,     KC_BSPC,        KC_NO,                 KC_NO,  KC_NO,          HoldMouseLayer_mac,  LatchMouseLayer_mac,  UnlatchMouseLayer_mac,  KC_NO,  KC_NO,
       //+-------+------------+--------------+------------+------------+---------------+----------------+     +-------+---------------+--------------------+---------------------+-----------------------+-------+-------+
-         KC_NO,  KC_ENTER,    LSFT(KC_TAB),  KC_TAB,      KC_TAB,      HID_TempDPI,                                   KC_NO,          KC_NO,               KC_NO,                KC_NO,                  KC_NO,  KC_NO,
+         KC_NO,  KC_ENTER,    LSFT(KC_TAB),  KC_TAB,      HID_TempDPI, KC_NO,                                         KC_NO,          KC_NO,               KC_NO,                KC_NO,                  KC_NO,  KC_NO,
       //+-------+------------+--------------+------------+------------+---------------+----------------+     +-------+---------------+--------------------+---------------------+-----------------------+-------+-------+
                                                           KC_BTN2,     KC_BTN1,        HID_DragScroll,        KC_NO,  LGUI(KC_LBRC),  LGUI(KC_RBRC)
       //                                                 +------------+---------------+----------------+     +-------+---------------+--------------------+
@@ -135,13 +333,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
 
   [5] = LAYOUT_split_3x6_3_ex2
   (
-      //+-------+---------------+---------------+---------------+---------------+------------+-------+     +----------+---------------------+---------------------+---------+-----------+--------------+-------+
-         KC_NO,  LCTL(KC_Z),     LCTL(KC_X),     LCTL(KC_C),     LCTL(KC_V),     LCTL(KC_Y),  KC_NO,        KC_NO,     KC_HOME,              KC_PGDN,              KC_PGUP,  KC_END,     KC_PSCR,       KC_NO,
-      //+-------+---------------+---------------+---------------+---------------+------------+-------+     +----------+---------------------+---------------------+---------+-----------+--------------+-------+
-         KC_NO,  OSM(MOD_LALT),  OSM(MOD_LGUI),  OSM(MOD_LSFT),  OSM(MOD_LCTL),  KC_BSPC,     KC_NO,        KC_NO,     KC_LEFT,              KC_DOWN,              KC_UP,    KC_RIGHT,   KC_ESCAPE,     KC_NO,
-      //+-------+---------------+---------------+---------------+---------------+------------+-------+     +----------+---------------------+---------------------+---------+-----------+--------------+-------+
-         KC_NO,  KC_ENTER,       LSFT(KC_TAB),   KC_TAB,         OSM(MOD_RCTL),  KC_NO,                                KC_DELETE,            KC_BSPC,              KC_TAB,   KC_INSERT,  KC_CAPS_LOCK,  KC_NO,
-      //+-------+---------------+---------------+---------------+---------------+------------+-------+     +----------+---------------------+---------------------+---------+-----------+--------------+-------+
+      //+-------+---------------+---------------+---------------+---------------+------------+-------+     +----------+---------------------+---------------------+---------+-------------------+---------------------+-------+
+         KC_NO,  LCTL(KC_Z),     LCTL(KC_X),     LCTL(KC_C),     LCTL(KC_V),     LCTL(KC_Y),  KC_NO,        KC_NO,     KC_HOME,              KC_PGDN,              KC_PGUP,  HOST_LINE_END_KEY,  HOST_SCREENSHOT_KEY,  KC_NO,
+      //+-------+---------------+---------------+---------------+---------------+------------+-------+     +----------+---------------------+---------------------+---------+-------------------+---------------------+-------+
+         KC_NO,  OSM(MOD_LALT),  OSM(MOD_LGUI),  OSM(MOD_LSFT),  OSM(MOD_LCTL),  KC_BSPC,     KC_NO,        KC_NO,     KC_LEFT,              KC_DOWN,              KC_UP,    KC_RIGHT,           KC_ESCAPE,            KC_NO,
+      //+-------+---------------+---------------+---------------+---------------+------------+-------+     +----------+---------------------+---------------------+---------+-------------------+---------------------+-------+
+         KC_NO,  KC_ENTER,       LSFT(KC_TAB),   KC_TAB,         OSM(MOD_RCTL),  KC_NO,                                KC_DELETE,            KC_BSPC,              KC_TAB,   KC_INSERT,          KC_CAPS_LOCK,         KC_NO,
+      //+-------+---------------+---------------+---------------+---------------+------------+-------+     +----------+---------------------+---------------------+---------+-------------------+---------------------+-------+
                                                                  MO(11),         KC_NO,       KC_NO,        KC_ENTER,  LCTL(LGUI(KC_LEFT)),  LCTL(LGUI(KC_RIGHT))
       //                                                        +---------------+------------+-------+     +----------+---------------------+---------------------+
   ),
@@ -164,7 +362,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
       //+-------+------------+--------------+------------+------------+-------------+----------------+     +-------+---------------+--------------------+---------------------+-----------------------+-------+-------+
          KC_NO,  KC_LALT,     KC_LGUI,       KC_LSFT,     KC_LCTL,     KC_BSPC,      KC_NO,                 KC_NO,  KC_NO,          HoldMouseLayer_win,  LatchMouseLayer_win,  UnlatchMouseLayer_win,  KC_NO,  KC_NO,
       //+-------+------------+--------------+------------+------------+-------------+----------------+     +-------+---------------+--------------------+---------------------+-----------------------+-------+-------+
-         KC_NO,  KC_ENTER,    LSFT(KC_TAB),  KC_TAB,      KC_TAB,      LED_TempDPI,                                 KC_NO,          KC_NO,               KC_NO,                KC_NO,                  KC_NO,  KC_NO,
+         KC_NO,  KC_ENTER,    LSFT(KC_TAB),  KC_TAB,      LED_TempDPI, KC_NO,                                       KC_NO,          KC_NO,               KC_NO,                KC_NO,                  KC_NO,  KC_NO,
       //+-------+------------+--------------+------------+------------+-------------+----------------+     +-------+---------------+--------------------+---------------------+-----------------------+-------+-------+
                                                           KC_BTN2,     KC_BTN1,      LED_DragScroll,        KC_NO,  LALT(KC_LEFT),  LALT(KC_RIGHT)
       //                                                 +------------+-------------+----------------+     +-------+---------------+--------------------+
@@ -195,13 +393,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
   ),
   [10] = LAYOUT_split_3x6_3_ex2
   (
-      //+-------+-------+-------+-------+-------+-------+-------+     +-------+----------+---------+---------+----------+---------+-------+
-         KC_NO,  KC_NO,  KC_NO,  KC_NO,  KC_NO,  KC_NO,  KC_NO,        KC_NO,  RGB_M_P,   RGB_M_B,  RGB_M_R,  RGB_M_SN,  RGB_M_K,  KC_NO,
-      //+-------+-------+-------+-------+-------+-------+-------+     +-------+----------+---------+---------+----------+---------+-------+
-         KC_NO,  KC_NO,  KC_NO,  DF(4),  DF(0),  KC_NO,  KC_NO,        KC_NO,  RGB_MOD,   RGB_VAI,  RGB_HUI,  RGB_SAI,   RGB_SPI,  KC_NO,
-      //+-------+-------+-------+-------+-------+-------+-------+     +-------+----------+---------+---------+----------+---------+-------+
-         KC_NO,  KC_NO,  KC_NO,  KC_NO,  KC_NO,  KC_NO,                        RGB_RMOD,  RGB_VAD,  RGB_HUD,  RGB_SAD,   RGB_SPD,  KC_NO,
-      //+-------+-------+-------+-------+-------+-------+-------+     +-------+----------+---------+---------+----------+---------+-------+
+      //+-------+-------+-------+--------------+--------------+-------+-------+     +-------+----------+---------+---------+----------+---------+-------+
+         KC_NO,  KC_NO,  KC_NO,  KC_NO,         KC_NO,         KC_NO,  KC_NO,        KC_NO,  RGB_M_P,   RGB_M_B,  RGB_M_R,  RGB_M_SN,  RGB_M_K,  KC_NO,
+      //+-------+-------+-------+--------------+--------------+-------+-------+     +-------+----------+---------+---------+----------+---------+-------+
+         KC_NO,  KC_NO,  KC_NO,  Macro_SetWin,  Macro_SetMac,  KC_NO,  KC_NO,        KC_NO,  RGB_MOD,   RGB_VAI,  RGB_HUI,  RGB_SAI,   RGB_SPI,  KC_NO,
+      //+-------+-------+-------+--------------+--------------+-------+-------+     +-------+----------+---------+---------+----------+---------+-------+
+         KC_NO,  KC_NO,  KC_NO,  KC_NO,         KC_NO,         KC_NO,                        RGB_RMOD,  RGB_VAD,  RGB_HUD,  RGB_SAD,   RGB_SPD,  KC_NO,
+      //+-------+-------+-------+--------------+--------------+-------+-------+     +-------+----------+---------+---------+----------+---------+-------+
                                          KC_NO,  KC_NO,  KC_NO,        KC_NO,  KC_NO,     KC_NO
       //                                +-------+-------+-------+     +-------+----------+---------+
   ),

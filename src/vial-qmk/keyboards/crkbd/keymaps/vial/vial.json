@@ -97,6 +97,71 @@
             "name": "APPLE_GLOBE",
             "title": "Apple Globe",
             "shortName": "GLOBE"
+        },
+        {
+            "name": "MACRO_M00_OUTLINE_COLLAPSE_ALL",
+            "title": "M00 Collapse All Outlines",
+            "shortName": "M00_COLL"
+        },
+        {
+            "name": "MACRO_M01_OUTLINE_TOGGLE_CURRENT",
+            "title": "M01 Toggle Current Outline",
+            "shortName": "M01_TOG"
+        },
+        {
+            "name": "MACRO_M02_OUTLINE_EXPAND_ALL",
+            "title": "M02 Expand All Outlines",
+            "shortName": "M02_EXP"
+        },
+        {
+            "name": "MACRO_M03_BOOKMARK_PREVIOUS",
+            "title": "M03 Previous Bookmark",
+            "shortName": "M03_PREV"
+        },
+        {
+            "name": "MACRO_M04_BOOKMARK_TOGGLE",
+            "title": "M04 Toggle Bookmark",
+            "shortName": "M04_TOG"
+        },
+        {
+            "name": "MACRO_M05_BOOKMARK_CLEAR_ALL",
+            "title": "M05 Clear All Bookmarks",
+            "shortName": "M05_CLR"
+        },
+        {
+            "name": "MACRO_M06_BOOKMARK_NEXT",
+            "title": "M06 Next Bookmark",
+            "shortName": "M06_NEXT"
+        },
+        {
+            "name": "MACRO_M07_COMMENT",
+            "title": "M07 Comment",
+            "shortName": "M07_COM"
+        },
+        {
+            "name": "MACRO_M08_UNCOMMENT",
+            "title": "M08 Uncomment",
+            "shortName": "M08_UNC"
+        },
+        {
+            "name": "MACRO_M10",
+            "title": "Macro_M10 placeholder text",
+            "shortName": "M10"
+        },
+        {
+            "name": "MACRO_M11",
+            "title": "Macro_M11 placeholder text",
+            "shortName": "M11"
+        },
+        {
+            "name": "MACRO_M12",
+            "title": "Macro_M12 placeholder text",
+            "shortName": "M12"
+        },
+        {
+            "name": "MACRO_M13",
+            "title": "Macro_M13 placeholder text",
+            "shortName": "M13"
         }],
     "layouts": {
         "labels": [
