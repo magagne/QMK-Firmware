@@ -120,8 +120,8 @@ The custom firmware modules are located at:
 
 ## Combos and macros
 
-The eight ZMK combos are installed into Vial's eight combo slots on the first
-boot after this firmware update. They remain editable in Vial afterward.
+The eight ZMK combos populate Vial's combo slots when they are all empty,
+including after a Vial reset. Existing combo configurations are preserved.
 Layer-sensitive combos only trigger on the corresponding Mac or Windows
 layers.
 

@@ -62,6 +62,28 @@ static bool vial_macro_buffer_is_empty(void) {
     return true;
 }
 
+static bool vial_combo_entries_are_empty(void) {
+    for (uint8_t combo_index = 0; combo_index < VIAL_COMBO_ENTRIES;
+         combo_index++) {
+        vial_combo_entry_t entry;
+        if (dynamic_keymap_get_combo(combo_index, &entry) != 0) {
+            uprintf("Failed to read Vial combo %u\n", combo_index);
+            return false;
+        }
+
+        if (entry.output != KC_NO) {
+            return false;
+        }
+        for (uint8_t input_index = 0; input_index < 4; input_index++) {
+            if (entry.input[input_index] != KC_NO) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 static bool install_vial_macro_defaults(void) {
     static uint8_t default_macros[] =
         "\0\0\0\0\0\0\0\0\0\0Macro_10\0Macro_11\0Macro_12\0Macro_13";
@@ -111,12 +133,10 @@ bool combo_should_trigger(uint16_t combo_index, combo_t *combo,
 
 static void install_zmk_combo_defaults(void) {
     uint32_t user_magic = eeconfig_read_user();
+    bool known_magic = user_magic == ZMK_COMBO_DEFAULTS_MAGIC ||
+                       user_magic == VIAL_COMBO_AND_MACRO_DEFAULTS_MAGIC;
 
-    if (user_magic == VIAL_COMBO_AND_MACRO_DEFAULTS_MAGIC) {
-        return;
-    }
-
-    if (user_magic != ZMK_COMBO_DEFAULTS_MAGIC) {
+    if (!known_magic || vial_combo_entries_are_empty()) {
         for (uint8_t combo_index = 0; combo_index < VIAL_COMBO_ENTRIES;
              combo_index++) {
             if (dynamic_keymap_set_combo(combo_index,
